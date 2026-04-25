@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>dear diary</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #fff;
+            --accent-color: #ffbf00;
+            --done-color: rgb(88, 88, 88);
+            --danger-color: rgb(255, 100, 91);
+            --border-width: 2px;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #fff;
+            --text-color: rgb(88, 88, 88);
+            --accent-color: #ffbf00;
+            --done-color: rgb(88, 88, 88);
+            --danger-color: rgb(255, 100, 91);
+        }
+
+        [data-theme="light"] body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        [data-theme="light"] .day-card{
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        [data-theme="light"] .day-card:hover {
+            background-color: var(--bg-color);
+            color: var(--accent-color);
+        }
+
+        [data-theme="light"] .day-card.done {
+            background-color: var(--bg-color);
+        }
+
+        [data-theme="light"] input[type="number"] {
+            background: var(--bg-color);
+            border: 1px, solid, var(--text-color);
+            color: var(--text-color);
+        }
+
+        [data-theme="light"] input:focus {
+            outline: 1px solid var(--accent-color);
+        }
+
+        [data-theme="light"] .exercise-block {
+            border: 1px, solid, var(--text-color);
+            background: var(--bg-color);
+        }
+
+        [data-theme="light"] #rest-timer-overlay {
+            background: var(--bg-color);
+            border: 1px, solid, var(--text-color);
+        }
+
+        [data-theme="light"] .modal-content {
+            background: var(--bg-color);
+            border-color: var(--text-color);
+        }
+
+        [data-theme="light"] .modal-message {
+            color: var(--text-color);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--accent-color);
+            font-family: Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        input, textarea, button {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        header {
+            border: 1px solid var(--done-color);
+            margin-top: 10px;
+            margin-left: 25%;
+            box-sizing: border-box;
+            width: 50%;
+            height: 48px;
+            border-radius: 24px;
+            padding: 10px;
+            text-align: center;
+            position: fixed;
+            top: env(safe-area-inset-top, 0px);
+            z-index: 100;
+            background-color: var(--bg-color);
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        #global-timer {
+            font-size: 1.5rem;
+            font-family: monospace;
+            color: var(--text-color);
+        }
+
+        #home-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            padding-top: env(safe-area-inset-top, 10px);
+            padding-bottom: env(safe-area-inset-bottom, 10px);
+            
+            box-sizing: border-box;
+        }
+
+        .day-cards {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+
+        .day-card {
+            box-sizing: border-box;
+            width: 100%;
+            height: 150px;
+            border: var(--border-width) solid var(--accent-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            border-radius: 24px;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .day-card:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .day-card.done {
+            border: var(--border-width) dashed var(--done-color);
+            color: var(--done-color);
+            pointer-events: none;
+        }
+
+        .setting-btns {
+            width: 100%;
+            height: 48px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.5rem;
+        }
+
+        .clear-history-btn {
+            box-sizing: border-box;
+            border: 1px solid var(--done-color);
+            cursor: pointer;
+            border-radius: 24px;
+            color: var(--done-color);
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-tap-highlight-color: transparent;
+            transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .clear-history-btn:hover {
+            border: 1px solid var(--danger-color);
+            background-color: var(--danger-color);
+            color: var(--bg-color);
+        }
+
+        .theme-btn {
+            cursor: pointer;
+            width: 48px;
+            height: 48px;
+            background-color: var(--text-color);
+            border: 1px solid var(--done-color);
+            box-sizing: border-box;
+            border-radius: 24px;
+            transition: transform 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .theme-btn:active {
+            transform: scale(0.9);
+        }
+
+        #workout-screen {
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            padding-top: calc(env(safe-area-inset-top, 68px) + 68px);
+            padding-bottom: 80px;
+            overflow-y: auto;
+        }
+
+        .exercise-block {
+            display: flex;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+            padding: 18px;
+            border-radius: 24px;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            flex-wrap: wrap;
+            box-sizing: border-box;
+        }
+
+        .exercise-img {
+            width: 100px;
+        }
+
+        .form-container {
+            padding-left: 10px;
+            box-sizing: border-box;
+            width: calc(100% - 100px);
+            display: flex;
+            justify-content: space-between;
+            flex-direction: column;
+        }
+
+        .exercise-number {
+            font-size: 1.2rem;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="number"] {
+            background: var(--bg-color);
+            border: 1px, solid, var(--done-color);
+            color: var(--text-color);
+            box-sizing: border-box;
+            padding: 10px;
+            height: 48px;
+            border-radius: 24px;
+            width: 100%;
+            font-size: 0.8rem;
+            text-indent: 10px;
+        }
+
+        input:focus {
+            outline: 1px solid var(--accent-color);
+        }
+
+        .btn-primary {
+            border: 1px solid var(--accent-color);
+            color: var(--bg-color);
+            background-color: var(--accent-color);
+            border-radius: 24px;
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            box-sizing: border-box;
+            font-size: 2rem;
+            flex-shrink: 0;
+            padding: 0;
+        }
+
+        .progress-container {
+            width: 100%;
+            display: flex;
+            height: 12px;
+            margin-top: 18px;
+        }
+
+        .progress-segment {
+            flex: 1;
+            background-color: var(--done-color);
+            border-radius: 6px;
+            box-sizing: border-box;
+            border: 2px solid, var(--bg-color);
+        }
+        .progress-segment.filled {
+            background: var(--accent-color);
+        }
+
+        .history-badge {
+            width: 100%;
+            height: 48px;
+            border-radius: 24px;
+            display: flex;
+            font-size: 1rem;
+            box-sizing: border-box;
+            border: 1px, solid, var(--accent-color);
+            background-color: var(--bg-color);
+            color: var(--accent-color);
+            margin-top: 10px;
+            cursor: pointer;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #rest-timer-overlay {
+            display: none;
+            margin-top: 10px;
+            margin-left: 25%;
+            position: fixed;
+            bottom: env(safe-area-inset-bottom, 10px);
+            left: 0;
+            width: 50%;
+            height: 48px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--done-color);
+            border-radius: 24px;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 200;
+            box-sizing: border-box;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        #rest-countdown {
+            font-size: 1.5rem;
+            color: var(--text-color);
+            font-family: monospace;
+        }
+
+        #next-exercise-btn {
+            background: none;
+            display: none;
+            color: var(--done-color);
+            width: 100%;
+            height: 46px;
+            border: none;
+            font-size: 1rem;
+            border-radius: 23px;
+        }
+
+        /* 🔥 СТИЛИ ДЛЯ МОДАЛЬНЫХ ОКОН */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            border: 1px solid var(--accent-color);
+            border-radius: 24px;
+            padding: 18px 18px;
+            max-width: 85%;
+            text-align: center;
+        }
+
+        .modal-message {
+            color: var(--text-color);
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-btn {
+            background-color: var(--accent-color);
+            height: 48px;
+            border-radius: 24px;
+            padding: 10px;
+            box-sizing: border-box;
+            width: 100px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .modal-btn-secondary {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+        }
+
+        .modal-btn-danger {
+            background: var(--danger-color);
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div id="global-timer">00:00:00</div>
+    </header>
+
+    <div id="home-screen">
+        <div class="day-cards">
+            <div class="day-card" onclick="openDay(1)" id="day-btn-1">Понедельник</div>
+            <div class="day-card" onclick="openDay(2)" id="day-btn-2">Среда</div>
+            <div class="day-card" onclick="openDay(3)" id="day-btn-3">Пятница</div>
+        </div>
+
+        <div class="setting-btns">
+            <div class="clear-history-btn" onclick="clearAllHistory()">Сбросить</div>
+            <div class="theme-btn" onclick="changeTheme()" title="Переключить тему"></div>
+        </div>
+    </div>
+
+    <div id="workout-screen">
+        <div id="exercises-container"></div>
+    </div>
+
+    <div id="rest-timer-overlay">
+        <div id="rest-countdown">02:00</div>
+        <button id="next-exercise-btn" onclick="skipToNextExercise()">Следующее упражнение</button>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-message" class="modal-message"></div>
+            <div id="modal-buttons" class="modal-buttons"></div>
+        </div>
+    </div>
+
+    <script>
+        const defaultExercises = {
+            1: [
+                "Разгибание поясницы",
+                "Ширина шеи",
+                "Прыжки на скакалке",
+                "Верхняя часть трапеции",
+                "Внутренняя часть груди",
+                "Икры",
+                "Бицепс на силу",
+                "Дельты на силу",
+                "Сгибание ног",
+                "Тяга спереди",
+                "Разгибание рук на силу",
+                "Скручивание кисти в блоке",
+                "Приседание в тренажёре",
+                "Вакуум"
+            ],
+            2: [
+                "Разгибание поясницы",
+                "Разгибание шеи назад",
+                "Задние дельты",
+                "Растяжение груди",
+                "Икры",
+                "Растяжение бицепса",
+                "Растяжение дельт",
+                "Сгибание ног",
+                "Тяга верхнего блока",   
+                "Растяжение трицепса",
+                "Пресс",
+                "Вис на пальцах",
+                "Приседание со штангой",
+                "Файтболл"
+            ],
+            3: [
+                "Разгибание поясницы",
+                "Выдвижение шеи вперёд",
+                "Запрыгивания на тумбу",
+                "Жим штанги лёжа",
+                "Задняя часть трапеции",
+                "Икры",
+                "Подтягивания параллельным хватом",
+                "Передняя дельта",
+                "Сгибание ног",
+                "Растяжение широчайшей",
+                "Алмазные отжимания",
+                "Косые мышцы пресса",
+                "Воздушные приседания",
+                "Эспандер"
+            ]
+        };
+
+        let currentDay = null;
+        let globalTimerInterval = null;
+        let globalStartTime = null;
+        let restTimerInterval = null;
+        let activeRestExerciseIndex = -1;
+
+        let appData = JSON.parse(localStorage.getItem('gymAppData')) || null;
+
+        function changeTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('gymAppTheme', newTheme);
+            
+            const themeBtn = document.querySelector('.theme-btn');
+            themeBtn.style.transform = 'scale(0.85)';
+            setTimeout(() => {
+                themeBtn.style.transform = 'scale(1)';
+            }, 150);
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('gymAppTheme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+
+        function showModal(message, buttons, onCallback) {
+            const overlay = document.getElementById('modal-overlay');
+            const messageEl = document.getElementById('modal-message');
+            const buttonsEl = document.getElementById('modal-buttons');
+            
+            messageEl.textContent = message;
+            buttonsEl.innerHTML = '';
+            
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.className = `modal-btn ${btn.class || 'modal-btn-primary'}`;
+                button.textContent = btn.text;
+                button.onclick = () => {
+                    overlay.style.display = 'none';
+                    if (onCallback) onCallback(btn.action);
+                };
+                buttonsEl.appendChild(button);
+            });
+            
+            overlay.style.display = 'flex';
+        }
+
+        function showAlert(message, onOk) {
+            showModal(message, [
+                { text: 'OK', class: 'modal-btn-primary', action: 'ok' }
+            ], onOk);
+        }
+
+        function showConfirm(message, onConfirm, onCancel) {
+            showModal(message, [
+                { text: 'OK', class: 'modal-btn-primary', action: 'ok' }
+            ], (action) => {
+                if (action === 'ok' && onConfirm) onConfirm();
+            });
+        }
+
+        function showDangerConfirm(message, onConfirm, onCancel) {
+            showModal(message, [
+                { text: 'Отмена', class: 'modal-btn-secondary', action: 'cancel' },
+                { text: 'Удалить', class: 'modal-btn-danger', action: 'ok' }
+            ], (action) => {
+                if (action === 'ok' && onConfirm) onConfirm();
+                else if (action === 'cancel' && onCancel) onCancel();
+            });
+        }
+
+        function initData() {
+            if (!appData) {
+                appData = {};
+                for (let day = 1; day <= 3; day++) {
+                    appData[day] = {
+                        exercises: defaultExercises[day].map(name => ({
+                            name: name,
+                            sets: [],
+                            lastData: null,
+                            image: null
+                        })),
+                        completed: false
+                    };
+                }
+                saveData();
+            }
+        }
+
+        function init() {
+            loadTheme();
+            initData();
+            updateHomeScreenUI();
+        }
+
+        function openDay(dayId) {
+            if (appData[dayId].completed) return;
+
+            currentDay = dayId;
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('workout-screen').style.display = 'flex';
+            
+            renderExercises();
+            startGlobalTimer();
+        }
+
+        function goHome() {
+            currentDay = null;
+            stopGlobalTimer();
+            document.getElementById('workout-screen').style.display = 'none';
+            document.getElementById('home-screen').style.display = 'flex';
+            updateHomeScreenUI();
+            saveData();
+        }
+
+        function updateHomeScreenUI() {
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.getElementById(`day-btn-${i}`);
+                if (appData[i].completed) {
+                    btn.classList.add('done');
+                } else {
+                    btn.classList.remove('done');
+                }
+            }
+
+            if (appData[1].completed && appData[2].completed && appData[3].completed) {
+                showConfirm(
+                    "Сброс тренировочных дней",
+                    () => {
+                        for (let i = 1; i <= 3; i++) {
+                            appData[i].completed = false;
+                            appData[i].exercises.forEach(ex => {
+                                ex.sets = [];
+                            });
+                        }
+                        saveData();
+                        updateHomeScreenUI();
+                    }
+                );
+            }
+        }
+
+        function clearAllHistory() {
+            showDangerConfirm(
+                "Стереть историю и сбросить дни",
+                () => {
+                    localStorage.removeItem('gymAppData');
+                    appData = null;
+                    initData();
+                    updateHomeScreenUI();
+                    showAlert("История полностью очищена!");
+                }
+            );
+        }
+
+        function renderExercises() {
+    const container = document.getElementById('exercises-container');
+    container.innerHTML = '';
+
+    appData[currentDay].exercises.forEach((ex, index) => {
+        const block = document.createElement('div');
+        block.className = 'exercise-block';
+        
+        const exerciseNumber = index + 1;
+        const localImagePath = `images/day${currentDay}/${exerciseNumber}.png`;
+        
+        let progressBarHTML = '<div class="progress-container">';
+        for(let i=0; i<3; i++) {
+            const isFilled = i < ex.sets.length ? 'filled' : '';
+            progressBarHTML += `<div class="progress-segment ${isFilled}"></div>`;
+        }
+        progressBarHTML += '</div>';
+
+        let historyHTML = '';
+        if (ex.lastData) {
+            historyHTML = `<div class="history-badge" onclick="fillLastData(${index})">
+                Последнее: ${ex.lastData.w}кг / ${ex.lastData.r}повт.
+            </div>`;
+        }
+
+        block.innerHTML = `
+            <!-- 1. Картинка упражнения -->
+            <div class="exercise-image">
+                <img src="${localImagePath}" 
+                     alt="${ex.name}" 
+                     class="exercise-img" 
+                     onerror="this.src='https://via.placeholder.com/300x150/222222/ffbf00?text=${encodeURIComponent(ex.name)}'">
+            </div>
+            
+            <!-- 2. Название упражнения -->
+            <div class="form-container">
+                <div class="exercise-number">${ex.name}</div>
+                
+                <!-- 3. Инпуты с кнопкой -->
+                <div class="input-group">
+                    <input type="number" id="weight-${index}" placeholder="Вес (кг)">
+                    <input type="number" id="reps-${index}" placeholder="Повторы">
+                    <button class="btn btn-primary" onclick="submitSet(${index})">+</button>
+                </div>
+
+
+            </div>
+            <!-- 4. Последние введённые данные -->
+                ${historyHTML}
+            <!-- 5. Прогресс бар -->
+            ${progressBarHTML}
+        `;
+        container.appendChild(block);
+
+        setTimeout(() => {
+            const weightInput = document.getElementById(`weight-${index}`);
+            const repsInput = document.getElementById(`reps-${index}`);
+            
+            weightInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    repsInput.focus();
+                }
+            });
+            
+            repsInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitSet(index);
+                }
+            });
+        }, 0);
+    });
+}
+
+        function fillLastData(index) {
+            const ex = appData[currentDay].exercises[index];
+            if (ex.lastData) {
+                document.getElementById(`weight-${index}`).value = ex.lastData.w;
+                document.getElementById(`reps-${index}`).value = ex.lastData.r;
+            }
+        }
+
+        function submitSet(exIndex) {
+            const weightInput = document.getElementById(`weight-${exIndex}`);
+            const repsInput = document.getElementById(`reps-${exIndex}`);
+            
+            const w = weightInput.value;
+            const r = repsInput.value;
+
+            if (!w || !r) {
+                showAlert("Введите вес и повторения");
+                return;
+            }
+
+            const ex = appData[currentDay].exercises[exIndex];
+            ex.sets.push({ w: w, r: r });
+            ex.lastData = { w: w, r: r };
+            
+            if (ex.sets.length === 3) {
+                checkDayCompletion();
+            }
+
+            saveData();
+            renderExercises();
+            startRestTimer(exIndex);
+        }
+
+        function checkDayCompletion() {
+            const exercises = appData[currentDay].exercises;
+            let allDone = true;
+            
+            if (exercises.length === 0) return;
+
+            exercises.forEach(ex => {
+                if (ex.sets.length < 3) allDone = false;
+            });
+
+            if (allDone) {
+                appData[currentDay].completed = true;
+                setTimeout(() => {
+                    showAlert("Тренировка завершена!", () => {
+                        goHome();
+                    });
+                }, 500);
+            }
+        }
+
+        function startGlobalTimer() {
+            if (globalTimerInterval) return;
+
+            if (!globalStartTime) {
+                globalStartTime = Date.now();
+            }
+
+            globalTimerInterval = setInterval(() => {
+                const now = Date.now();
+                const diff = now - globalStartTime;
+                
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('global-timer').innerText = 
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopGlobalTimer() {
+            clearInterval(globalTimerInterval);
+            globalTimerInterval = null;
+            globalStartTime = null; 
+            document.getElementById('global-timer').innerText = "00:00:00";
+        }
+
+        function startRestTimer(exIndex) {
+            activeRestExerciseIndex = exIndex;
+            const overlay = document.getElementById('rest-timer-overlay');
+            const display = document.getElementById('rest-countdown');
+            const nextBtn = document.getElementById('next-exercise-btn');
+            
+            overlay.style.display = 'flex';
+            overlay.style.backgroundColor = 'var(--bg-color)';
+            nextBtn.style.display = 'none';
+            display.style.display = 'block';
+
+            let timeLeft = 120;
+            display.innerText = "02:00";
+
+            if (restTimerInterval) clearInterval(restTimerInterval);
+
+            restTimerInterval = setInterval(() => {
+                timeLeft--;
+                
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                display.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(restTimerInterval);
+                    overlay.style.backgroundColor = 'var(--accent-color)';
+                    display.style.display = 'none';
+                    nextBtn.style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        function skipToNextExercise() {
+            clearInterval(restTimerInterval);
+            document.getElementById('rest-timer-overlay').style.display = 'none';
+            
+            const currentEx = appData[currentDay].exercises[activeRestExerciseIndex];
+            if (currentEx.sets.length >= 3) {
+                let nextIdx = activeRestExerciseIndex + 1;
+                if (nextIdx < appData[currentDay].exercises.length) {
+                     document.getElementById(`weight-${nextIdx}`).focus();
+                }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('gymAppData', JSON.stringify(appData));
+        }
+
+        init();
+
+        (function() {
+            if (typeof AndroidTheme === 'undefined') return;
+
+            function syncTheme() {
+                const theme = document.body.getAttribute('data-theme') || 'dark';
+                try {
+                    AndroidTheme.setTheme(theme);
+                } catch (e) {
+                    console.warn('Theme sync failed:', e);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', syncTheme);
+
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((m) => {
+                    if (m.attributeName === 'data-theme') {
+                        setTimeout(syncTheme, 50);
+                    }
+                });
+            });
+            observer.observe(document.body, { attributes: true });
+
+            const originalChangeTheme = window.changeTheme;
+            window.changeTheme = function() {
+                if (originalChangeTheme) originalChangeTheme();
+                setTimeout(syncTheme, 100);
+            };
+
+            const originalInit = window.init;
+            window.init = function() {
+                if (originalInit) originalInit();
+                setTimeout(syncTheme, 200);
+            };
+        })();
+
+    </script>
+</body>
+</html>
